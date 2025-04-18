@@ -127,6 +127,25 @@ void testPercentOperationAfterAddition() {
     assertEquals(expected, actual);
 }
 
+@Test
+@DisplayName("should follow operator precedence: multiplication before addition")
+void testMultipleOperations() {
+    Calculator calc = new Calculator();
+
+    calc.pressDigitKey(5);
+    calc.pressBinaryOperationKey("+");
+    calc.pressDigitKey(2);
+    calc.pressBinaryOperationKey("x");
+    calc.pressDigitKey(3);
+    calc.pressEqualsKey();
+
+    String expected = "11"; 
+    String actual = calc.readScreen();
+
+    assertEquals(expected, actual);
+}
+
+
     //TODO hier weitere Tests erstellen
 }
 
