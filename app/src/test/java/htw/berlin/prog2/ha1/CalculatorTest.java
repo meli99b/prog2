@@ -1,9 +1,8 @@
 package htw.berlin.prog2.ha1;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Retro calculator")
 class CalculatorTest {
@@ -88,6 +87,28 @@ class CalculatorTest {
         assertEquals(expected, actual);
     }
 
+
+    /**
+     * 
+     */
+    @Test
+    @DisplayName("should clear the screen when the clear button is pressed")
+    void testClear() {
+        Calculator calc = new Calculator();
+
+    
+    calc.pressDigitKey(8);
+    calc.pressBinaryOperationKey("+");
+    calc.pressDigitKey(2);
+    calc.pressEqualsKey();
+
+    calc.pressClearKey();
+
+    String expected = "0"; 
+    String actual = calc.readScreen();
+
+    assertEquals(expected, actual);
+}
 
     //TODO hier weitere Tests erstellen
 }
