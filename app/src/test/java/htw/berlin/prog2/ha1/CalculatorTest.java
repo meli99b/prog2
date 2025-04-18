@@ -110,6 +110,23 @@ class CalculatorTest {
     assertEquals(expected, actual);
 }
 
+@Test
+@DisplayName("should interpret second number as percentage of first when using percent key")
+void testPercentOperationAfterAddition() {
+    Calculator calc = new Calculator();
+
+    calc.pressDigitKey(5);
+    calc.pressBinaryOperationKey("+");
+    calc.pressDigitKey(5);
+    calc.pressUnaryOperationKey("%");
+    calc.pressEqualsKey();
+
+    String expected = "5.25";
+    String actual = calc.readScreen();
+
+    assertEquals(expected, actual);
+}
+
     //TODO hier weitere Tests erstellen
 }
 
