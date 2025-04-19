@@ -72,19 +72,61 @@ public class Calculator {
      * @param operation "√" für Quadratwurzel, "%" für Prozent, "1/x" für Inversion
      */
     public void pressUnaryOperationKey(String operation) {
-        latestValue = Double.parseDouble(screen);
-        latestOperation = operation;
-        var result = switch(operation) {
-            case "√" -> Math.sqrt(Double.parseDouble(screen));
-            case "%" -> Double.parseDouble(screen) / 100;
-            case "1/x" -> 1 / Double.parseDouble(screen);
-            default -> throw new IllegalArgumentException();
+        double currentValue = Double.parseDouble(screen);
+    
+        // Handle percentage operation separately
+        if (operation.equals("%")) {
+            // Interpret the screen value as a percentage of latestValue if we were in a binary operation
+            if (latestOperation.equals("+") || latestOperation.equals("-") ||
+                latestOperation.equals("x") || latestOperation.equals("/")) {
+                // Compute percentage of the first operand (latestValue)
+                double result = latestValue * currentValue / 100;
+                screen = Double.toString(result);
+    
+                // Clean up display (remove trailing ".0" if it exists)
+                if (screen.endsWith(".0")) {
+                    screen = screen.substring(0, screen.length() - 2);
+                }
+                return; // Exit the method after handling the percentage
+            } else {
+                // Regular percentage operation (just divide by 100)
+                screen = Double.toString(currentValue / 100);
+                return;
+            }
+        }
+    
+        // Handle other unary operations (like square root, 1/x, etc.)
+        double result = switch (operation) {
+            case "√" -> Math.sqrt(currentValue);
+            case "1/x" -> 1 / currentValue;
+            default -> throw new IllegalArgumentException("Unsupported unary operation: " + operation);
         };
+    
+        // Update screen with result
         screen = Double.toString(result);
-        if(screen.equals("NaN")) screen = "Error";
-        if(screen.contains(".") && screen.length() > 11) screen = screen.substring(0, 10);
-
+    
+        // Handle error cases for NaN or Infinity
+        if (screen.equals("NaN") || screen.equals("Infinity")) {
+            screen = "Error";
+        }
+    
+        // Clean up screen if it ends with ".0"
+        if (screen.endsWith(".0")) {
+            screen = screen.substring(0, screen.length() - 2);
+        }
+    
+        // Limit screen length if needed
+        if (screen.contains(".") && screen.length() > 11) {
+            screen = screen.substring(0, 10);
+        }
+    
+        // Update latestOperation after handling the unary operation
+        latestOperation = operation;
     }
+    
+    
+
+
 
     /**
      * Empfängt den Befehl der gedrückten Dezimaltrennzeichentaste, im Englischen üblicherweise "."
@@ -118,16 +160,47 @@ public class Calculator {
      * und das Ergebnis direkt angezeigt.
      */
     public void pressEqualsKey() {
-        var result = switch(latestOperation) {
+        // Handle percentage calculation (second number as percentage of the first operand)
+        if (latestOperation.equals("%")) {
+            // Calculate the percentage of latestValue (the first operand) using the current screen value (the second operand)
+            double percentage = latestValue * Double.parseDouble(screen) / 100;
+            screen = Double.toString(percentage);
+    
+            // Clean up the screen display if it ends with ".0"
+            if (screen.endsWith(".0")) {
+                screen = screen.substring(0, screen.length() - 2); 
+            }
+            return; // Return early after handling the percentage case
+        }
+    
+        // Handle the normal binary operations (addition, subtraction, multiplication, division)
+        var result = switch (latestOperation) {
             case "+" -> latestValue + Double.parseDouble(screen);
             case "-" -> latestValue - Double.parseDouble(screen);
             case "x" -> latestValue * Double.parseDouble(screen);
-            case "/" -> latestValue / Double.parseDouble(screen);
+            case "/" -> Double.parseDouble(screen) == 0 ? Double.NaN : latestValue / Double.parseDouble(screen);
             default -> throw new IllegalArgumentException();
         };
+    
+        // Update screen with the result
         screen = Double.toString(result);
-        if(screen.equals("Infinity")) screen = "Error";
-        if(screen.endsWith(".0")) screen = screen.substring(0,screen.length()-2);
-        if(screen.contains(".") && screen.length() > 11) screen = screen.substring(0, 10);
+    
+        // Handle error cases for Infinity or NaN
+        if (screen.equals("Infinity") || screen.equals("NaN")) {
+            screen = "Error";
+        }
+    
+        // Clean up the screen display if it ends with ".0"
+        if (screen.endsWith(".0")) {
+            screen = screen.substring(0, screen.length() - 2);
+        }
+    
+        // Limit the screen to 10 characters if there are too many decimals
+        if (screen.contains(".") && screen.length() > 11) {
+            screen = screen.substring(0, 10);
+        }
     }
+    
+    
+   
 }
