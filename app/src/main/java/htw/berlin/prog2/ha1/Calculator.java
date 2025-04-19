@@ -14,6 +14,11 @@ public class Calculator {
 
     private String latestOperation = "";
 
+    private double pendingValue = 0.0;
+
+    private String pendingOperation = "";
+
+
     /**
      * @return den aktuellen Bildschirminhalt als String
      */
@@ -59,10 +64,29 @@ public class Calculator {
      * auf dem Bildschirm angezeigt. Falls hierbei eine Division durch Null auftritt, wird "Error" angezeigt.
      * @param operation "+" für Addition, "-" für Substraktion, "x" für Multiplikation, "/" für Division
      */
-    public void pressBinaryOperationKey(String operation)  {
-        latestValue = Double.parseDouble(screen);
+    public void pressBinaryOperationKey(String operation) {
+        double currentValue = Double.parseDouble(screen);
+    
+        // Evaluate immediately if the previous operation is x or /
+        if (latestOperation.equals("x") || latestOperation.equals("/")) {
+            latestValue = switch (latestOperation) {
+                case "x" -> latestValue * currentValue;
+                case "/" -> currentValue == 0 ? Double.NaN : latestValue / currentValue;
+                default -> latestValue; // shouldn't hit
+            };
+        } else if (!latestOperation.isEmpty()) {
+            // If it's + or -, store the intermediate value for now
+            latestValue = Double.parseDouble(screen);
+        } else {
+            latestValue = currentValue;
+        }
+    
         latestOperation = operation;
+        screen = "0";
     }
+    
+    
+    
 
     /**
      * Empfängt den Wert einer gedrückten unären Operationstaste, also eine der drei Operationen
@@ -160,46 +184,45 @@ public class Calculator {
      * und das Ergebnis direkt angezeigt.
      */
     public void pressEqualsKey() {
-        // Handle percentage calculation (second number as percentage of the first operand)
-        if (latestOperation.equals("%")) {
-            // Calculate the percentage of latestValue (the first operand) using the current screen value (the second operand)
-            double percentage = latestValue * Double.parseDouble(screen) / 100;
-            screen = Double.toString(percentage);
+        double current = Double.parseDouble(screen);
     
-            // Clean up the screen display if it ends with ".0"
+        // Special case: percent operation
+        if (latestOperation.equals("%")) {
+            double percentage = latestValue * current / 100;
+            screen = Double.toString(percentage);
             if (screen.endsWith(".0")) {
-                screen = screen.substring(0, screen.length() - 2); 
+                screen = screen.substring(0, screen.length() - 2);
             }
-            return; // Return early after handling the percentage case
+            return;
         }
     
-        // Handle the normal binary operations (addition, subtraction, multiplication, division)
-        var result = switch (latestOperation) {
-            case "+" -> latestValue + Double.parseDouble(screen);
-            case "-" -> latestValue - Double.parseDouble(screen);
-            case "x" -> latestValue * Double.parseDouble(screen);
-            case "/" -> Double.parseDouble(screen) == 0 ? Double.NaN : latestValue / Double.parseDouble(screen);
-            default -> throw new IllegalArgumentException();
+        // Apply last binary operation
+        double result = switch (latestOperation) {
+            case "x" -> latestValue * current;
+            case "/" -> current == 0 ? Double.NaN : latestValue / current;
+            case "+" -> latestValue + current;
+            case "-" -> latestValue - current;
+            default -> current;
         };
     
-        // Update screen with the result
+        // Apply pending + or - if stored
+        if (!pendingOperation.isEmpty()) {
+            result = switch (pendingOperation) {
+                case "+" -> pendingValue + result;
+                case "-" -> pendingValue - result;
+                default -> result;
+            };
+            pendingOperation = "";
+            pendingValue = 0.0;
+        }
+    
         screen = Double.toString(result);
     
-        // Handle error cases for Infinity or NaN
-        if (screen.equals("Infinity") || screen.equals("NaN")) {
-            screen = "Error";
-        }
-    
-        // Clean up the screen display if it ends with ".0"
-        if (screen.endsWith(".0")) {
-            screen = screen.substring(0, screen.length() - 2);
-        }
-    
-        // Limit the screen to 10 characters if there are too many decimals
-        if (screen.contains(".") && screen.length() > 11) {
-            screen = screen.substring(0, 10);
-        }
+        if (screen.equals("NaN") || screen.equals("Infinity")) screen = "Error";
+        if (screen.endsWith(".0")) screen = screen.substring(0, screen.length() - 2);
+        if (screen.contains(".") && screen.length() > 11) screen = screen.substring(0, 10);
     }
+    
     
     
    
